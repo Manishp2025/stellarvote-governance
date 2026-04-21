@@ -22,7 +22,7 @@ A decentralized, transparent, and secure voting platform built on the Stellar ne
 ## 🚀 Submission Details
 - **GitHub Repository**: [https://github.com/Harsh936132/steller-level3.git](https://github.com/Harsh936132/steller-level3.git)
 - **Live Demo**: [https://steller-leve3.vercel.app/](https://steller-leve3.vercel.app/)
-- **Demo Video**: [Insert YouTube/Loom Link Here]
+- **Demo Video**: ![Demo Video](./stellar-vote-demo.gif)
 
 ### 💡 Quick Deploy & Record
 1. Click the **Deploy with Vercel** button above to host your dApp instantly.
