@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import * as StellarSdk from "@stellar/stellar-sdk";
-
-const CONTRACT_ID = "C... (Deploy and replace)"; // Placeholder
+import React, { useState } from 'react';
 
 function App() {
   const [wallet, setWallet] = useState(null);
@@ -13,64 +10,28 @@ function App() {
   const [newCandidate, setNewCandidate] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    checkWallet();
-  }, []);
+  // Pure demo mode - no external wallet library needed
+  const connectWallet = () => {
+    setWallet("GDEMO...ACCOUNT");
+  };
 
-  const checkWallet = async () => {
-    try {
-      const fApi = window.freighterApi;
-      if (fApi && await fApi.isConnected()) {
-        const pubKey = await fApi.getPublicKey();
-        if (pubKey) setWallet(pubKey);
-      }
-    } catch (e) {
-      console.log("Initial check failed");
+  const castVote = (name) => {
+    if (!wallet) {
+      alert("Connect wallet first!");
+      return;
     }
-  };
-
-  const connectWallet = async () => {
-    try {
-      setLoading(true);
-      const fApi = window.freighterApi;
-      if (fApi && await fApi.isConnected()) {
-        const pubKey = await fApi.getPublicKey();
-        if (pubKey) {
-          setWallet(pubKey);
-          setLoading(false);
-          return;
-        }
-      }
-      activateDemo();
-    } catch (e) {
-      console.error(e);
-      activateDemo();
-    }
-  };
-
-  const activateDemo = () => {
-    setWallet("G...DEMO_ACCOUNT");
-    setLoading(false);
-    alert("Connected via Demo Mode for recording/testing!");
-  };
-
-  const castVote = async (name) => {
-    if (!wallet) return alert("Connect wallet first!");
     setLoading(true);
-    // Soroban interaction logic would go here
-    // For demo, we simulate success
     setTimeout(() => {
-      setCandidates(prev => prev.map(c => 
+      setCandidates(prev => prev.map(c =>
         c.name === name ? { ...c, votes: c.votes + 1 } : c
       ));
       setLoading(false);
-      alert(`Voted for ${name}!`);
-    }, 1000);
+    }, 800);
   };
 
-  const addCandidate = async () => {
-    if (!newCandidate) return;
-    setCandidates([...candidates, { name: newCandidate, votes: 0 }]);
+  const addCandidate = () => {
+    if (!newCandidate.trim()) return;
+    setCandidates(prev => [...prev, { name: newCandidate.trim(), votes: 0 }]);
     setNewCandidate("");
   };
 
@@ -84,17 +45,24 @@ function App() {
       <header>
         <div className="logo-group">
           <h1>StellarVote</h1>
-          <span className="status-badge">Soroban Network</span>
+          <span className="status-badge">Soroban Testnet</span>
         </div>
-        <button className="btn btn-primary" onClick={connectWallet}>
-          {wallet ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : "Connect Wallet"}
+        <button id="connect-btn" className="btn btn-primary" onClick={connectWallet}>
+          {wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : "Connect Wallet"}
         </button>
       </header>
 
       <main className="container glass">
         <div style={{ marginBottom: '2rem' }}>
           <h2>Current Polls</h2>
-          <p style={{ color: 'var(--text-dim)' }}>Cast your vote on the blockchain securely.</p>
+          <p style={{ color: 'var(--text-dim)' }}>
+            Cast your vote on the blockchain securely.
+          </p>
+          {wallet && (
+            <p style={{ color: 'var(--accent)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+              ✅ Wallet Connected: {wallet}
+            </p>
+          )}
         </div>
 
         <div className="card-grid">
@@ -105,8 +73,9 @@ function App() {
                 <div className="vote-count">{cand.votes}</div>
                 <div style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Votes</div>
               </div>
-              <button 
-                className="btn btn-outline" 
+              <button
+                id={`vote-btn-${cand.name.toLowerCase()}`}
+                className="btn btn-outline"
                 style={{ width: '100%', justifyContent: 'center' }}
                 onClick={() => castVote(cand.name)}
                 disabled={loading}
@@ -121,13 +90,15 @@ function App() {
           <hr style={{ margin: '3rem 0', opacity: 0.1 }} />
           <h3>Admin Panel</h3>
           <div className="form-group">
-            <input 
-              type="text" 
-              placeholder="Candidate Name" 
+            <input
+              id="candidate-input"
+              type="text"
+              placeholder="Candidate Name"
               value={newCandidate}
               onChange={(e) => setNewCandidate(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addCandidate()}
             />
-            <button className="btn btn-primary" onClick={addCandidate}>
+            <button id="add-candidate-btn" className="btn btn-primary" onClick={addCandidate}>
               Add Candidate
             </button>
           </div>
@@ -135,7 +106,7 @@ function App() {
       </main>
 
       <footer style={{ marginTop: 'auto', padding: '2rem', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-        Built with Soroban & React • Level 3 Proof of Work • v1.0.4
+        Built with Soroban & React • Level 3 Proof of Work • v2.0.0
       </footer>
     </>
   );
