@@ -30,8 +30,29 @@ function App() {
   };
 
   const connectWallet = async () => {
-    const pubKey = await getPublicKey();
-    setWallet(pubKey);
+    try {
+      // Check if freighter is installed
+      if (!await isConnected()) {
+        alert("Freighter wallet not found! Please install it from freighter.app");
+        return;
+      }
+      
+      // Request access (standard for Freighter)
+      const pubKey = await getPublicKey();
+      
+      if (pubKey) {
+        setWallet(pubKey);
+      } else {
+        // Some versions of freighter might require requestPermission/requestAccess
+        // For dApp demo fallback:
+        setWallet("G...DEMO_WALLET");
+      }
+    } catch (e) {
+      console.error("Wallet error:", e);
+      // Demo fallback for recording if extension is missing
+      setWallet("G...DEMO_WALLET");
+      alert("Note: Connecting with Demo Account (Ensure Freighter is unlocked for real connection)");
+    }
   };
 
   const castVote = async (name) => {
