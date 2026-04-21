@@ -135,7 +135,7 @@ function App() {
       </main>
 
       <footer style={{ marginTop: 'auto', padding: '2rem', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-        Built with Soroban & React • Level 3 Proof of Work
+        Built with Soroban & React • Level 3 Proof of Work • v1.0.4
       </footer>
     </>
   );
