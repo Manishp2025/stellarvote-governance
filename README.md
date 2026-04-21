@@ -19,13 +19,22 @@ A decentralized, transparent, and secure voting platform built on the Stellar ne
 - `/contracts/voting`: Soroban Rust contract and unit tests.
 - `/frontend`: Vite + React application.
 
-## 🧪 Testing
+## 🚀 Submission Details
+- **GitHub Repository**: [https://github.com/Harsh936132/steller-level3.git](https://github.com/Harsh936132/steller-level3.git)
+- **Live Demo**: [Insert Vercel/Netlify Link Here]
+- **Demo Video**: [Insert YouTube/Loom Link Here]
+
+## 📸 Test Output
+![Test Output Screenshot](./test-output.png)
+*Output showing 3 tests passing in the smart contract.*
+
+## 🧪 Testing details
 The contract includes 3 comprehensive unit tests:
 1. `test_voting_flow`: Validates the end-to-end flow of adding candidates and casting votes.
-2. `test_double_voting`: Ensures a single address cannot vote more than once (fails as expected).
+2. `test_double_voting`: Ensures a single address cannot vote more than once.
 3. `test_double_init`: Prevents the contract from being initialized multiple times.
 
-### Run Tests:
+### How to Run Tests locally:
 ```bash
 cd contracts/voting
 cargo test
