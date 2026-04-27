@@ -8,6 +8,12 @@ pub enum DataKey {
     Candidate(Symbol),
     Voted(Address),
     Candidates,
+    TokenId,
+}
+
+// Interface for the Reward Token contract
+mod token {
+    soroban_sdk::contractclient!(name = "TokenClient", calls = ["mint", "balance_of"]);
 }
 
 #[contract]
@@ -15,11 +21,13 @@ pub struct VotingContract;
 
 #[contractimpl]
 impl VotingContract {
-    pub fn init(env: Env, admin: Address) {
+    pub fn init(env: Env, admin: Address, token_id: Address) {
         if env.storage().instance().has(&DataKey::Admin) {
             panic!("Already initialized");
         }
         env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage().instance().set(&DataKey::TokenId, &token_id);
+        
         let candidates: Vec<Symbol> = Vec::new(&env);
         env.storage().instance().set(&DataKey::Candidates, &candidates);
     }
@@ -52,6 +60,11 @@ impl VotingContract {
         // Mark as voted
         env.storage().instance().set(&DataKey::Voted(voter.clone()), &true);
 
+        // Reward voter with 10 tokens
+        let token_id: Address = env.storage().instance().get(&DataKey::TokenId).expect("Token not set");
+        let token_client = token::TokenClient::new(&env, &token_id);
+        token_client.mint(&voter, &10);
+
         // Publish Event
         env.events().publish((symbol_short!("vote"), symbol_short!("cast")), (voter, candidate));
     }
@@ -63,63 +76,73 @@ impl VotingContract {
     pub fn list_candidates(env: Env) -> Vec<Symbol> {
         env.storage().instance().get(&DataKey::Candidates).unwrap_or(Vec::new(&env))
     }
+
+    pub fn get_token_id(env: Env) -> Address {
+        env.storage().instance().get(&DataKey::TokenId).expect("Token not set")
+    }
 }
 
 mod test {
     use super::*;
     use soroban_sdk::testutils::Address as _;
+    use voter_token::{VoterToken, VoterTokenClient};
 
     #[test]
     fn test_voting_flow() {
         let env = Env::default();
-        let contract_id = env.register_contract(None, VotingContract);
-        let client = VotingContractClient::new(&env, &contract_id);
+        let voting_id = env.register_contract(None, VotingContract);
+        let voting_client = VotingContractClient::new(&env, &voting_id);
+
+        let token_id = env.register_contract(None, crate::VoterToken);
+        let token_client = crate::VoterTokenClient::new(&env, &token_id);
 
         let admin = Address::generate(&env);
         let voter1 = Address::generate(&env);
         let voter2 = Address::generate(&env);
 
-        client.init(&admin);
+        token_client.initialize(&voting_id); // Voting contract is the admin of the token
+        voting_client.init(&admin, &token_id);
 
         let cand1 = symbol_short!("Alice");
         let cand2 = symbol_short!("Bob");
 
         // Test 1: Add candidates
         env.mock_all_auths();
-        client.add_candidate(&cand1);
-        client.add_candidate(&cand2);
+        voting_client.add_candidate(&cand1);
+        voting_client.add_candidate(&cand2);
 
-        assert_eq!(client.list_candidates(), Vec::from_array(&env, [cand1.clone(), cand2.clone()]));
+        assert_eq!(voting_client.list_candidates(), Vec::from_array(&env, [cand1.clone(), cand2.clone()]));
 
-        // Test 2: Vote
-        client.vote(&voter1, &cand1);
-        assert_eq!(client.get_votes(&cand1), 1);
+        // Test 2: Vote and check rewards
+        voting_client.vote(&voter1, &cand1);
+        assert_eq!(voting_client.get_votes(&cand1), 1);
+        assert_eq!(token_client.balance_of(&voter1), 10);
 
-        client.vote(&voter2, &cand1);
-        assert_eq!(client.get_votes(&cand1), 2);
-
-        // Test 3: List candidates
-        let candidates = client.list_candidates();
-        assert_eq!(candidates.len(), 2);
+        voting_client.vote(&voter2, &cand1);
+        assert_eq!(voting_client.get_votes(&cand1), 2);
+        assert_eq!(token_client.balance_of(&voter2), 10);
     }
 
     #[test]
     #[should_panic(expected = "Already voted")]
     fn test_double_voting() {
         let env = Env::default();
-        let contract_id = env.register_contract(None, VotingContract);
-        let client = VotingContractClient::new(&env, &contract_id);
+        let voting_id = env.register_contract(None, VotingContract);
+        let voting_client = VotingContractClient::new(&env, &voting_id);
+        let token_id = env.register_contract(None, crate::VoterToken);
+        let token_client = crate::VoterTokenClient::new(&env, &token_id);
 
         let admin = Address::generate(&env);
         let voter = Address::generate(&env);
-        client.init(&admin);
+        token_client.initialize(&voting_id);
+        voting_client.init(&admin, &token_id);
 
         let cand1 = symbol_short!("Alice");
         env.mock_all_auths();
-        client.add_candidate(&cand1);
+        voting_client.add_candidate(&cand1);
 
-        client.vote(&voter, &cand1);
-        client.vote(&voter, &cand1); // Should panic
+        voting_client.vote(&voter, &cand1);
+        voting_client.vote(&voter, &cand1); // Should panic
     }
 
     #[test]
