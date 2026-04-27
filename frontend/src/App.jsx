@@ -7,7 +7,7 @@ const CONTRACT_ID = "CC6O7XG7K6Y7ZJ2V3W5XYG6Y7ZJ2V3W5XYG6Y7ZJ2V3W5XYG6Y7ZJ2V3W";
 const RPC_URL = "https://soroban-testnet.stellar.org";
 const NETWORK_PASSPHRASE = StellarSdk.Networks.TESTNET;
 
-const server = new StellarSdk.SorobanRpc.Server(RPC_URL);
+const server = new StellarSdk.rpc.Server(RPC_URL);
 
 function App() {
   const [wallet, setWallet] = useState(null);
@@ -24,6 +24,17 @@ function App() {
         if (publicKey) setWallet(publicKey);
       }
     };
+    
+    // Load from cache initially
+    const cachedCandidates = localStorage.getItem("stellarVote_candidates");
+    if (cachedCandidates) {
+      try {
+        setCandidates(JSON.parse(cachedCandidates));
+      } catch (e) {
+        console.error("Failed to parse cached candidates", e);
+      }
+    }
+
     checkWallet();
     fetchCandidates();
   }, []);
@@ -44,7 +55,7 @@ function App() {
         .build();
 
       const result = await server.simulateTransaction(tx);
-      if (StellarSdk.SorobanRpc.Api.isSimulationSuccess(result)) {
+      if (StellarSdk.rpc.Api.isSimulationSuccess(result)) {
         const candidateNames = StellarSdk.scValToNative(result.result.retval);
         
         // Fetch votes for each candidate
@@ -63,10 +74,14 @@ function App() {
         }));
         
         setCandidates(candidatesWithVotes);
+        // Cache the results
+        localStorage.setItem("stellarVote_candidates", JSON.stringify(candidatesWithVotes));
       }
     } catch (err) {
       console.error("Error fetching candidates:", err);
-      setStatus("Error: Make sure contract is deployed and ID is correct.");
+      if (candidates.length === 0) {
+        setStatus("Error: Make sure contract is deployed and ID is correct.");
+      }
     } finally {
       setLoading(false);
     }
