@@ -13,7 +13,12 @@ pub enum DataKey {
 
 // Interface for the Reward Token contract
 mod token {
-    soroban_sdk::contractclient!(name = "TokenClient", calls = ["mint", "balance_of"]);
+    use soroban_sdk::{Address, Env};
+    #[soroban_sdk::contractclient(name = "TokenClient")]
+    pub trait TokenTrait {
+        fn mint(env: Env, to: Address, amount: i128);
+        fn balance_of(env: Env, user: Address) -> i128;
+    }
 }
 
 #[contract]
@@ -63,7 +68,7 @@ impl VotingContract {
         // Reward voter with 10 tokens
         let token_id: Address = env.storage().instance().get(&DataKey::TokenId).expect("Token not set");
         let token_client = token::TokenClient::new(&env, &token_id);
-        token_client.mint(&voter, &10);
+        token_client.mint(&voter, &10i128);
 
         // Publish Event
         env.events().publish((symbol_short!("vote"), symbol_short!("cast")), (voter, candidate));
