@@ -121,11 +121,11 @@ mod test {
         // Test 2: Vote and check rewards
         voting_client.vote(&voter1, &cand1);
         assert_eq!(voting_client.get_votes(&cand1), 1);
-        assert_eq!(token_client.balance_of(&voter1), 10);
+        assert_eq!(token_client.balance_of(&voter1), 10i128);
 
         voting_client.vote(&voter2, &cand1);
         assert_eq!(voting_client.get_votes(&cand1), 2);
-        assert_eq!(token_client.balance_of(&voter2), 10);
+        assert_eq!(token_client.balance_of(&voter2), 10i128);
     }
 
     #[test]
