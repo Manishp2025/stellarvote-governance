@@ -93,8 +93,8 @@ mod test {
         let voting_id = env.register_contract(None, VotingContract);
         let voting_client = VotingContractClient::new(&env, &voting_id);
 
-        let token_id = env.register_contract(None, crate::VoterToken);
-        let token_client = crate::VoterTokenClient::new(&env, &token_id);
+        let token_id = env.register_contract(None, VoterToken);
+        let token_client = VoterTokenClient::new(&env, &token_id);
 
         let admin = Address::generate(&env);
         let voter1 = Address::generate(&env);
@@ -129,8 +129,8 @@ mod test {
         let env = Env::default();
         let voting_id = env.register_contract(None, VotingContract);
         let voting_client = VotingContractClient::new(&env, &voting_id);
-        let token_id = env.register_contract(None, crate::VoterToken);
-        let token_client = crate::VoterTokenClient::new(&env, &token_id);
+        let token_id = env.register_contract(None, VoterToken);
+        let token_client = VoterTokenClient::new(&env, &token_id);
 
         let admin = Address::generate(&env);
         let voter = Address::generate(&env);
@@ -153,7 +153,8 @@ mod test {
         let client = VotingContractClient::new(&env, &contract_id);
 
         let admin = Address::generate(&env);
-        client.init(&admin);
-        client.init(&admin); // Should panic
+        let token_id = Address::generate(&env);
+        client.init(&admin, &token_id);
+        client.init(&admin, &token_id); // Should panic
     }
 }
